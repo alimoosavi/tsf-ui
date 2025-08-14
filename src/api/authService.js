@@ -1,11 +1,27 @@
-import axiosInstance from "./axiosInstance";
+// src/api/authService.js
+import axiosInstance from "./axiosInstance"; // Adjust path if needed
 
-export const login = async (username, password) => {
-    const res = await axiosInstance.post("token/", { username, password });
-    return res.data;
-};
+export async function login(username, password) {
+    try {
+        const response = await axiosInstance.post("/token/", {
+            username,
+            password,
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { detail: "Login failed" };
+    }
+}
 
-export const registerUser = async (username, password) => {
-    const res = await axiosInstance.post("register/", { username, password });
-    return res.data;
-};
+export async function registerUser(username, email, password) {
+    try {
+        const response = await axiosInstance.post("/register/", {
+            username,
+            email,
+            password,
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { detail: "Registration failed" };
+    }
+}

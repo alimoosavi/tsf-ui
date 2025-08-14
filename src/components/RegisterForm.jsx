@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { registerUser } from "../api/authService";
-import styles from "../styles/AuthApp.module.css";
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Link,
+  Alert,
+} from "@mui/material";
 
 export default function RegisterForm({ switchToLogin }) {
   const [form, setForm] = useState({ username: "", password: "" });
@@ -27,36 +35,72 @@ export default function RegisterForm({ switchToLogin }) {
   };
 
   return (
-    <div className={styles.container}>
-      <form className={styles.card} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>Create Account</h1>
-        <input
-          type="text"
-          placeholder="Username"
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        bgcolor: '#f5f5f5',
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          maxWidth: 400,
+          width: '100%',
+          borderRadius: 2,
+        }}
+        component="form"
+        onSubmit={handleSubmit}
+      >
+        <Typography variant="h4" component="h1" gutterBottom>
+          Create Account
+        </Typography>
+        <TextField
+          fullWidth
+          label="Username"
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
+          margin="normal"
+          variant="outlined"
         />
-        <input
+        <TextField
+          fullWidth
+          label="Password"
           type="password"
-          placeholder="Password"
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
+          margin="normal"
+          variant="outlined"
         />
-        <button type="submit" disabled={loading}>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          fullWidth
+          sx={{ mt: 2 }}
+        >
           {loading ? "Creating Account..." : "Create Account"}
-        </button>
+        </Button>
         {message && (
-          <div className={isSuccess ? styles.success : styles.error}>
+          <Alert severity={isSuccess ? "success" : "error"} sx={{ mt: 2 }}>
             {message}
-          </div>
+          </Alert>
         )}
-        <p>
+        <Typography sx={{ mt: 2, textAlign: 'center' }}>
           Already have an account?{" "}
-          <span onClick={switchToLogin} className={styles.link}>
+          <Link
+            component="button"
+            onClick={switchToLogin}
+            sx={{ cursor: 'pointer' }}
+          >
             Sign in here
-          </span>
-        </p>
-      </form>
-    </div>
+          </Link>
+        </Typography>
+      </Paper>
+    </Box>
   );
 }

@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { login } from "../api/authService";
 import { useAuthStore } from "../store/authStore";
-import styles from "../styles/AuthApp.module.css";
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Link,
+  Alert,
+} from "@mui/material";
 
 export default function LoginForm({ switchToRegister }) {
   const [form, setForm] = useState({ username: "", password: "" });
@@ -24,32 +32,72 @@ export default function LoginForm({ switchToRegister }) {
   };
 
   return (
-    <div className={styles.container}>
-      <form className={styles.card} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>Welcome Back</h1>
-        <input
-          type="text"
-          placeholder="Username"
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        bgcolor: '#f5f5f5',
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          maxWidth: 400,
+          width: '100%',
+          borderRadius: 2,
+        }}
+        component="form"
+        onSubmit={handleSubmit}
+      >
+        <Typography variant="h4" component="h1" gutterBottom>
+          Welcome Back
+        </Typography>
+        <TextField
+          fullWidth
+          label="Username"
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
+          margin="normal"
+          variant="outlined"
         />
-        <input
+        <TextField
+          fullWidth
+          label="Password"
           type="password"
-          placeholder="Password"
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
+          margin="normal"
+          variant="outlined"
         />
-        <button type="submit" disabled={loading}>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          fullWidth
+          sx={{ mt: 2 }}
+        >
           {loading ? "Signing In..." : "Sign In"}
-        </button>
-        {error && <div className={styles.error}>{error}</div>}
-        <p>
+        </Button>
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <Typography sx={{ mt: 2, textAlign: 'center' }}>
           Don&apos;t have an account?{" "}
-          <span onClick={switchToRegister} className={styles.link}>
+          <Link
+            component="button"
+            onClick={switchToRegister}
+            sx={{ cursor: 'pointer' }}
+          >
             Sign up here
-          </span>
-        </p>
-      </form>
-    </div>
+          </Link>
+        </Typography>
+      </Paper>
+    </Box>
   );
 }

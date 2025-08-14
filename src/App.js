@@ -1,6 +1,6 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
-import AuthApp from "./pages/Auth";
+import { Navigate, Route, BrowserRouter as Router, Routes, Link } from "react-router-dom";
+import AuthApp from "./components/AuthApp";
+import Dashboard from "./components/Dashboard";
 import styles from "./styles/App.module.css";
 
 function App() {
@@ -20,47 +20,25 @@ function App() {
           <Route
             path="/register"
             element={
-              !isAuthenticated ? <AuthApp initialView="register" /> : <Navigate to="/dashboard" replace />
+              !isAuthenticated
+                ? <AuthApp initialView="register" />
+                : <Navigate to="/dashboard" replace />
             }
           />
           <Route
             path="/login"
             element={
-              !isAuthenticated ? <AuthApp initialView="login" /> : <Navigate to="/dashboard" replace />
+              !isAuthenticated
+                ? <AuthApp initialView="login" />
+                : <Navigate to="/dashboard" replace />
             }
           />
           <Route
             path="/dashboard"
             element={
-              isAuthenticated ? (
-                <div className={styles.dashboardContainer}>
-                  <div className={styles.dashboardCard}>
-                    <h1 className={styles.dashboardTitle}>Analytics Dashboard</h1>
-                    <p className={styles.dashboardSubtitle}>
-                      Welcome to your data analytics platform! 📊
-                    </p>
-                    <div className={styles.dashboardGrid}>
-                      {['Data Sources', 'ML Models', 'Reports', 'Pipelines'].map((item, i) => (
-                        <div key={i} className={styles.dashboardItem}>
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => {
-                        localStorage.removeItem("access_token");
-                        localStorage.removeItem("refresh_token");
-                        window.location.href = "/login";
-                      }}
-                      className={styles.logoutButton}
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <Navigate to="/login" replace />
-              )
+              isAuthenticated
+                ? <Dashboard />
+                : <Navigate to="/login" replace />
             }
           />
           <Route
