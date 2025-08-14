@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { registerUser } from "../api/authService";
 import {
+  Alert,
   Box,
-  Paper,
-  Typography,
-  TextField,
   Button,
   Link,
-  Alert,
+  Paper,
+  TextField,
+  Typography,
 } from "@mui/material";
+import { useState } from "react";
+import { registerUser } from "../api/authService";
 
 export default function RegisterForm({ switchToLogin }) {
   const [form, setForm] = useState({ username: "", password: "" });
