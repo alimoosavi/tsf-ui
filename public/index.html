@@ -1,46 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Analytics Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mui/material@5.16.7/umd/material-ui.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
-    rel="stylesheet"
-  />
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    import * as React from 'react';
-    import { createRoot } from 'react-dom/client';
-    import { ThemeProvider, createTheme } from '@mui/material/styles';
-    import AuthApp from './AuthApp';
-
-    const theme = createTheme({
-      palette: {
-        primary: {
-          main: '#1976d2',
-        },
-        secondary: {
-          main: '#dc004e',
-        },
-      },
-      typography: {
-        fontFamily: 'Roboto, Arial, sans-serif',
-      },
-    });
-
-    const root = createRoot(document.getElementById('root'));
-    root.render(
-      <ThemeProvider theme={theme}>
-        <AuthApp />
-      </ThemeProvider>
-    );
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics Dashboard</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>

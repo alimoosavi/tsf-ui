@@ -55,6 +55,7 @@ const App = () => {
     setAuthToken(token);
   }, [token]);
 
+
   if (isRestoring) {
     return (
       <ThemeProvider theme={theme}>
