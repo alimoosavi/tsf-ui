@@ -1,4 +1,5 @@
 import axiosInstance from "./axiosInstance";
+import { useAuthStore } from "../store/authStore";
 
 export async function login(username, password) {
     console.log('Login payload:', { username, password });
@@ -8,6 +9,8 @@ export async function login(username, password) {
             password,
         });
         console.log('Login response:', response.data);
+        const { setTokens } = useAuthStore.getState();
+        setTokens(response.data.access, response.data.refresh);
         return response.data;
     } catch (error) {
         console.error('Login error:', error.response?.data || error);

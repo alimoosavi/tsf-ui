@@ -9,13 +9,13 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { setToken } = useAuthStore();
+  const { setTokens } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const data = await login(username, password);
-      setToken(data.access); // Store access token
+      setTokens(data.access, data.refresh);
       navigate('/dashboard', { state: { message: 'Login successful' } });
     } catch (err) {
       setError(err.detail || 'Login failed. Please check your credentials.');
