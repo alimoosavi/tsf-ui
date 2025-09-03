@@ -1,33 +1,30 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Link,
-  Paper,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { useState } from "react";
-import { registerUser } from "../api/authService";
+import { Box, Button, TextField, Typography, Alert } from '@mui/material';
+import { useState } from 'react';
+import { registerUser } from '../api/authService';
+import { useNavigate } from 'react-router-dom';
 
-export default function RegisterForm({ switchToLogin }) {
-  const [form, setForm] = useState({ username: "", password: "" });
+const RegisterForm = ({ switchToLogin }) => {
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
+    setMessage('');
     try {
-      await registerUser(form.username, form.password);
-      setMessage("Account created successfully! You can now sign in.");
-      setIsSuccess(true);
-      setForm({ username: "", password: "" });
-      setTimeout(() => switchToLogin(), 2000);
-    } catch {
-      setMessage("Registration failed. Please try again.");
+      const data = await registerUser(form.username, form.email, form.password);
+      if (data.access && data.refresh) {
+        navigate('/', { state: { message: 'Registration successful' } });
+      } else {
+        setMessage('Account created successfully! Please log in.');
+        setIsSuccess(true);
+        setTimeout(switchToLogin, 2000);
+      }
+    } catch (err) {
+      setMessage(err.detail || 'Registration failed. Please try again.');
       setIsSuccess(false);
     } finally {
       setLoading(false);
@@ -35,72 +32,50 @@ export default function RegisterForm({ switchToLogin }) {
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        bgcolor: '#f5f5f5',
-      }}
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          maxWidth: 400,
-          width: '100%',
-          borderRadius: 2,
-        }}
-        component="form"
-        onSubmit={handleSubmit}
+    <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
+      <Typography variant="h5" gutterBottom>Create Account</Typography>
+      {message && <Alert severity={isSuccess ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
+      <TextField
+        fullWidth
+        label="Username"
+        value={form.username}
+        onChange={(e) => setForm({ ...form, username: e.target.value })}
+        margin="normal"
+        variant="outlined"
+      />
+      <TextField
+        fullWidth
+        label="Email"
+        type="email"
+        value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        margin="normal"
+        variant="outlined"
+      />
+      <TextField
+        fullWidth
+        label="Password"
+        type="password"
+        value={form.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        margin="normal"
+        variant="outlined"
+      />
+      <Button
+        type="submit"
+        variant="contained"
+        color="primary"
+        disabled={loading}
+        fullWidth
+        sx={{ mt: 2 }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Create Account
-        </Typography>
-        <TextField
-          fullWidth
-          label="Username"
-          value={form.username}
-          onChange={(e) => setForm({ ...form, username: e.target.value })}
-          margin="normal"
-          variant="outlined"
-        />
-        <TextField
-          fullWidth
-          label="Password"
-          type="password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          margin="normal"
-          variant="outlined"
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          disabled={loading}
-          fullWidth
-          sx={{ mt: 2 }}
-        >
-          {loading ? "Creating Account..." : "Create Account"}
-        </Button>
-        {message && (
-          <Alert severity={isSuccess ? "success" : "error"} sx={{ mt: 2 }}>
-            {message}
-          </Alert>
-        )}
-        <Typography sx={{ mt: 2, textAlign: 'center' }}>
-          Already have an account?{" "}
-          <Link
-            component="button"
-            onClick={switchToLogin}
-            sx={{ cursor: 'pointer' }}
-          >
-            Sign in here
-          </Link>
-        </Typography>
-      </Paper>
+        {loading ? 'Creating Account...' : 'Create Account'}
+      </Button>
+      <Typography sx={{ mt: 2, textAlign: 'center' }}>
+        Already have an account? <Button onClick={switchToLogin}>Sign in</Button>
+      </Typography>
     </Box>
   );
-}
+};
+
+export default RegisterForm;

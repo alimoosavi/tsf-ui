@@ -1,13 +1,11 @@
 import { Alert, Box, Button, CircularProgress } from "@mui/material";
 import { ThemeProvider, createTheme, styled } from "@mui/material/styles";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { setAuthToken } from "./api/axiosInstance";
 import AuthApp from "./components/AuthApp";
 import Dashboard from "./components/Dashboard";
 import { useAuthStore } from "./store/authStore";
 
-// Theme configuration
 const theme = createTheme({
   palette: {
     primary: { main: "#1976d2" },
@@ -17,7 +15,6 @@ const theme = createTheme({
   typography: { fontFamily: "Roboto, Arial, sans-serif" },
 });
 
-// Styled components
 const AppContainer = styled(Box)({
   minHeight: "100vh",
   display: "flex",
@@ -32,7 +29,6 @@ const AlertContainer = styled(Alert)({
   marginBottom: 16,
 });
 
-// Custom hook for session restoration
 const useSessionRestore = () => {
   const { restore, accessToken, logout } = useAuthStore();
   const [isRestoring, setIsRestoring] = useState(true);
@@ -42,15 +38,12 @@ const useSessionRestore = () => {
     try {
       console.log('Starting session restore');
       await restore();
-      console.log('Session restored, accessToken:', accessToken);
       setRestoreError(null);
     } catch (error) {
-      console.error('Session restore failed:', error.response?.data || error.message);
-      setRestoreError("Failed to restore session. Please log in again.");
     } finally {
       setIsRestoring(false);
     }
-  }, [restore, accessToken]);
+  }, [restore]);
 
   useEffect(() => {
     restoreSession();
@@ -63,6 +56,7 @@ const useSessionRestore = () => {
   }, [restoreSession]);
 
   const handleLoginRedirect = useCallback(() => {
+    console.log('Handling login redirect');
     logout();
     setRestoreError(null);
     window.location.href = '/login';
@@ -71,17 +65,16 @@ const useSessionRestore = () => {
   return { isRestoring, restoreError, retryRestore, handleLoginRedirect, accessToken };
 };
 
-// Protected Route component
 const ProtectedRoute = ({ children, accessToken, redirectTo = "/login" }) => {
+  console.log('ProtectedRoute check, accessToken:', accessToken);
   return accessToken ? children : <Navigate to={redirectTo} replace />;
 };
 
-// Public Route component
 const PublicRoute = ({ children, accessToken, redirectTo = "/" }) => {
+  console.log('PublicRoute check, accessToken:', accessToken);
   return accessToken ? <Navigate to={redirectTo} replace /> : children;
 };
 
-// Loading component
 const LoadingScreen = () => (
   <ThemeProvider theme={theme}>
     <AppContainer>
@@ -93,7 +86,6 @@ const LoadingScreen = () => (
   </ThemeProvider>
 );
 
-// Error screen component
 const ErrorScreen = ({ error, onRetry, onLogin }) => (
   <ThemeProvider theme={theme}>
     <AppContainer>
@@ -110,7 +102,6 @@ const ErrorScreen = ({ error, onRetry, onLogin }) => (
   </ThemeProvider>
 );
 
-// Success message component
 const SuccessMessage = ({ message }) => (
   <AlertContainer severity="success">{message}</AlertContainer>
 );
@@ -118,27 +109,23 @@ const SuccessMessage = ({ message }) => (
 const App = () => {
   const { isRestoring, restoreError, retryRestore, handleLoginRedirect, accessToken } = useSessionRestore();
   const location = useLocation();
+  const [successMessage, setSuccessMessage] = useState(location.state?.message);
 
-  // Set auth token when accessToken changes
   useEffect(() => {
-    console.log('Setting auth token:', accessToken);
-    setAuthToken(accessToken);
-  }, [accessToken]);
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      window.history.replaceState({}, document.title, location.pathname);
+    }
+  }, [location]);
 
-  // Memoize success message
-  const successMessage = useMemo(() => location.state?.message, [location.state?.message]);
-
-  // Show loading screen during session restoration
   if (isRestoring) {
     return <LoadingScreen />;
   }
 
-  // Show error screen if restoration failed
   if (restoreError) {
     return <ErrorScreen error={restoreError} onRetry={retryRestore} onLogin={handleLoginRedirect} />;
   }
 
-  // Main application routes
   return (
     <ThemeProvider theme={theme}>
       <AppContainer>
@@ -174,5 +161,6 @@ const App = () => {
     </ThemeProvider>
   );
 };
+
 
 export default App;

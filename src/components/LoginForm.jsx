@@ -2,21 +2,18 @@ import React, { useState } from 'react';
 import { TextField, Button, Box, Typography, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/authService';
-import { useAuthStore } from '../store/authStore';
 
-const LoginForm = () => {
+const LoginForm = ({ switchToRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { setTokens } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await login(username, password);
-      setTokens(data.access, data.refresh);
-      navigate('/dashboard', { state: { message: 'Login successful' } });
+      await login(username, password);
+      navigate('/', { state: { message: 'Login successful' } });
     } catch (err) {
       setError(err.detail || 'Login failed. Please check your credentials.');
     }
@@ -44,6 +41,10 @@ const LoginForm = () => {
       <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
         Login
       </Button>
+      <Typography sx={{ mt: 2, textAlign: 'center' }}>
+        Don't have an account?{' '}
+        <Button onClick={switchToRegister}>Register</Button>
+      </Typography>
     </Box>
   );
 };
