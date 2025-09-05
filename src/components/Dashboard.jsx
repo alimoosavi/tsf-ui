@@ -17,10 +17,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Table,
-  TableBody,
-  TableRow,
-  TableCell,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useCallback, useEffect, useState } from "react";
@@ -31,13 +27,16 @@ import DatasetUpload from "./DatasetUpload";
 
 // Styled components
 const DashboardContainer = styled(Box)(({ theme }) => ({
-  maxWidth: 1200,
+  maxWidth: 1400,
   margin: "32px auto",
   paddingBottom: theme.spacing(4),
 }));
 
 const HeaderBar = styled(AppBar)(({ theme }) => ({
   marginBottom: theme.spacing(4),
+  background: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  boxShadow: theme.shadows[1],
 }));
 
 const HeaderContent = styled(Box)(({ theme }) => ({
@@ -54,9 +53,11 @@ const ModelsGrid = styled(Grid)(({ theme }) => ({
 const ModelCard = styled(Card)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: theme.shape.borderRadius * 2,
-  boxShadow: theme.shadows[1],
+  boxShadow: theme.shadows[2],
+  transition: "0.3s",
   "&:hover": {
-    boxShadow: theme.shadows[4],
+    boxShadow: theme.shadows[6],
+    transform: "translateY(-2px)",
   },
 }));
 
@@ -90,35 +91,49 @@ function ModelDetailsModal({ open, onClose, model }) {
     }
   };
 
+  const details = model.architecture_details;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Model #{model.id} Details</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>
+        Model #{model.id} — Details
+      </DialogTitle>
       <DialogContent dividers>
+        {/* General Info */}
         <Typography variant="subtitle1" gutterBottom>
           Dataset ID: {model.dataset}
         </Typography>
-        <Typography variant="subtitle2" gutterBottom>
+        <Typography variant="subtitle2" gutterBottom color="text.secondary">
           Created at: {new Date(model.created_at).toLocaleString()}
         </Typography>
 
-        {/* Table for model details */}
-        <Table size="small" sx={{ mb: 2 }}>
-          <TableBody>
-            {Object.entries(model.architecture_details).map(([key, value]) => (
-              <TableRow key={key}>
-                <TableCell sx={{ fontWeight: "bold" }}>{key}</TableCell>
-                <TableCell>{String(value)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {/* Model Hyperparameters */}
+        <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+          Architecture Details
+        </Typography>
+        <Grid container spacing={2}>
+          {Object.entries(details).map(([key, value]) => (
+            <Grid item xs={12} sm={6} md={4} key={key}>
+              <TextField
+                label={key}
+                value={String(value)}
+                fullWidth
+                variant="outlined"
+                size="small"
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+          ))}
+        </Grid>
 
-        {/* Predict Input */}
-        <Typography variant="h6" gutterBottom>
-          Predict
+        {/* Prediction Input */}
+        <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+          Run Prediction
         </Typography>
         <Typography variant="body2" gutterBottom>
-          Enter a context array of {model.architecture_details.input_sequence_length} numbers (comma separated).
+          Enter a context array of{" "}
+          {model.architecture_details.input_sequence_length} numbers (comma
+          separated).
         </Typography>
         <TextField
           label="Input Context"
@@ -130,12 +145,15 @@ function ModelDetailsModal({ open, onClose, model }) {
           margin="normal"
         />
 
+        {/* Results */}
         {loading && <CircularProgress size={24} />}
-        {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
         {result && (
-          <Alert severity="success" sx={{ mt: 2 }}>
-            Prediction: {JSON.stringify(result)}
-          </Alert>
+          <Box sx={{ mt: 2 }}>
+            <Alert severity="success">
+              Prediction: {JSON.stringify(result)}
+            </Alert>
+          </Box>
         )}
       </DialogContent>
       <DialogActions>
@@ -196,9 +214,11 @@ const Dashboard = () => {
   return (
     <DashboardContainer>
       {/* Header */}
-      <HeaderBar position="static" color="default">
+      <HeaderBar position="static">
         <HeaderContent>
-          <Typography variant="h5">Time Series Forecasting Dashboard</Typography>
+          <Typography variant="h5" fontWeight="600">
+            📊 Time Series Forecasting Dashboard
+          </Typography>
           <Button variant="contained" color="primary" onClick={handleLogout}>
             Logout
           </Button>
@@ -240,16 +260,20 @@ const Dashboard = () => {
                       <Divider sx={{ my: 1 }} />
 
                       <Typography variant="body2">
-                        <strong>Epochs:</strong> {model.architecture_details.epochs}
+                        <strong>Epochs:</strong>{" "}
+                        {model.architecture_details.epochs}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Layers:</strong> {model.architecture_details.num_layers}
+                        <strong>Layers:</strong>{" "}
+                        {model.architecture_details.num_layers}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Batch Size:</strong> {model.architecture_details.batch_size}
+                        <strong>Batch Size:</strong>{" "}
+                        {model.architecture_details.batch_size}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Learning Rate:</strong> {model.architecture_details.learning_rate}
+                        <strong>Learning Rate:</strong>{" "}
+                        {model.architecture_details.learning_rate}
                       </Typography>
                       <Typography variant="body2">
                         <strong>Created:</strong>{" "}
