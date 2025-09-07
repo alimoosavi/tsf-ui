@@ -3,27 +3,27 @@ import {
   AppBar,
   Box,
   Button,
-  CircularProgress,
-  Tab,
-  Tabs,
-  Typography,
   Card,
-  CardContent,
   CardActions,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Tab,
+  Tabs,
   TextField,
+  Typography,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getModels, predict } from "../api/datasetService";
+import { cancelModel, getModels, predict } from "../api/modelService";
 import { useAuthStore } from "../store/authStore";
-import DatasetUpload from "./DatasetUpload";
+import CreateModel from "./CreateModel";
 
 // Styled components
 const DashboardContainer = styled(Box)(({ theme }) => ({
@@ -62,7 +62,7 @@ const ModelCard = styled(Card)(({ theme }) => ({
 }));
 
 // 🔹 Modal to show full model details + predict
-function ModelDetailsModal({ open, onClose, model }) {
+function ModelDetailsModal({ open, onClose, model, onCancelSuccess }) {
   const [context, setContext] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -81,6 +81,10 @@ function ModelDetailsModal({ open, onClose, model }) {
         .map((v) => parseFloat(v.trim()))
         .filter((v) => !isNaN(v));
 
+      if (contextArray.length !== model.architecture_details?.input_sequence_length) {
+        throw { detail: `Context length must be ${model.architecture_details?.input_sequence_length}, got ${contextArray.length}` };
+      }
+
       const response = await predict(model.id, contextArray);
       setResult(response.prediction);
     } catch (err) {
@@ -91,7 +95,22 @@ function ModelDetailsModal({ open, onClose, model }) {
     }
   };
 
-  const details = model.architecture_details;
+  const handleCancel = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await cancelModel(model.id);
+      setResult({ message: "Model processing canceled successfully" });
+      onCancelSuccess();
+    } catch (err) {
+      console.error(err);
+      setError(err.detail || "Failed to cancel model");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const details = model.architecture_details || {};
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -101,7 +120,13 @@ function ModelDetailsModal({ open, onClose, model }) {
       <DialogContent dividers>
         {/* General Info */}
         <Typography variant="subtitle1" gutterBottom>
-          Dataset ID: {model.dataset}
+          Dataset: {model.dataset_file}
+        </Typography>
+        <Typography variant="subtitle1" gutterBottom>
+          Column: {model.column_name}
+        </Typography>
+        <Typography variant="subtitle2" gutterBottom color="text.secondary">
+          Status: {model.status}
         </Typography>
         <Typography variant="subtitle2" gutterBottom color="text.secondary">
           Created at: {new Date(model.created_at).toLocaleString()}
@@ -127,40 +152,49 @@ function ModelDetailsModal({ open, onClose, model }) {
         </Grid>
 
         {/* Prediction Input */}
-        <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-          Run Prediction
-        </Typography>
-        <Typography variant="body2" gutterBottom>
-          Enter a context array of{" "}
-          {model.architecture_details.input_sequence_length} numbers (comma
-          separated).
-        </Typography>
-        <TextField
-          label="Input Context"
-          fullWidth
-          multiline
-          minRows={3}
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          margin="normal"
-        />
+        {model.status === "completed" && (
+          <>
+            <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+              Run Prediction
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              Enter a context array of {details.input_sequence_length} numbers (comma separated).
+            </Typography>
+            <TextField
+              label="Input Context"
+              fullWidth
+              multiline
+              minRows={3}
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              margin="normal"
+            />
+          </>
+        )}
 
         {/* Results */}
         {loading && <CircularProgress size={24} />}
         {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
         {result && (
           <Box sx={{ mt: 2 }}>
-            <Alert severity="success">
-              Prediction: {JSON.stringify(result)}
+            <Alert severity={result.message ? "info" : "success"}>
+              {result.message || `Prediction: ${JSON.stringify(result)}`}
             </Alert>
           </Box>
         )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
-        <Button onClick={handlePredict} variant="contained" disabled={loading}>
-          Predict
-        </Button>
+        {model.status === "completed" && (
+          <Button onClick={handlePredict} variant="contained" disabled={loading}>
+            Predict
+          </Button>
+        )}
+        {(model.status === "pending" || model.status === "processing") && (
+          <Button onClick={handleCancel} variant="contained" color="error" disabled={loading}>
+            Cancel Processing
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
@@ -232,7 +266,7 @@ const Dashboard = () => {
       </Tabs>
 
       {/* Tab Panels */}
-      {tabValue === 0 && <DatasetUpload onUploadSuccess={fetchModels} />}
+      {tabValue === 0 && <CreateModel onUploadSuccess={fetchModels} />}
 
       {tabValue === 1 && (
         <Box mt={4}>
@@ -250,37 +284,34 @@ const Dashboard = () => {
                   <ModelCard>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
-                        Model #{model.id} ({model.architecture_details.type})
+                        Model #{model.id} ({model.architecture_details?.type || 'N/A'})
                       </Typography>
-
                       <Typography variant="body2" color="text.secondary">
-                        Dataset ID: {model.dataset}
+                        Dataset: {model.dataset_file}
                       </Typography>
-
+                      <Typography variant="body2" color="text.secondary">
+                        Column: {model.column_name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Status: {model.status}
+                      </Typography>
                       <Divider sx={{ my: 1 }} />
-
                       <Typography variant="body2">
-                        <strong>Epochs:</strong>{" "}
-                        {model.architecture_details.epochs}
+                        <strong>Epochs:</strong> {model.architecture_details?.epochs || 'N/A'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Layers:</strong>{" "}
-                        {model.architecture_details.num_layers}
+                        <strong>Layers:</strong> {model.architecture_details?.num_layers || 'N/A'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Batch Size:</strong>{" "}
-                        {model.architecture_details.batch_size}
+                        <strong>Batch Size:</strong> {model.architecture_details?.batch_size || 'N/A'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Learning Rate:</strong>{" "}
-                        {model.architecture_details.learning_rate}
+                        <strong>Learning Rate:</strong> {model.architecture_details?.learning_rate || 'N/A'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Created:</strong>{" "}
-                        {new Date(model.created_at).toLocaleString()}
+                        <strong>Created:</strong> {new Date(model.created_at).toLocaleString()}
                       </Typography>
                     </CardContent>
-
                     <CardActions>
                       <Button
                         size="small"
@@ -310,6 +341,7 @@ const Dashboard = () => {
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           model={selectedModel}
+          onCancelSuccess={fetchModels}
         />
       )}
     </DashboardContainer>

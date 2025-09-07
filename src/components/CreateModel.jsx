@@ -1,17 +1,16 @@
-import { useState } from "react";
-import { uploadDataset } from "../api/datasetService";
 import {
+  Alert,
   Box,
-  Paper,
-  Typography,
-  TextField,
   Button,
   Input,
-  Alert,
+  Paper,
+  TextField,
+  Typography,
 } from "@mui/material";
+import { useState } from "react";
+import { uploadDataset } from "../api/modelService";
 
-export default function DatasetUpload() {
-  const [name, setName] = useState("");
+export default function CreateModel({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
   const [columnName, setColumnName] = useState("");
   const [userHyperparameters, setUserHyperparameters] = useState({
@@ -40,23 +39,32 @@ export default function DatasetUpload() {
       setMessage("Please select a file.");
       return;
     }
+    if (!columnName) {
+      setMessage("Please provide a column name.");
+      return;
+    }
+    try {
+      JSON.parse(JSON.stringify(userHyperparameters)); // Validate JSON
+    } catch {
+      setMessage("Invalid hyperparameters JSON.");
+      return;
+    }
     setLoading(true);
     setMessage("");
 
     try {
       await uploadDataset({
-        name,
         file,
         columnName,
         userHyperparameters,
       });
-      setMessage("Dataset uploaded successfully!");
-      setName("");
+      setMessage("Model created and dataset uploaded successfully!");
       setFile(null);
       setColumnName("");
+      onUploadSuccess();
     } catch (error) {
       console.error(error);
-      setMessage("Failed to upload dataset.");
+      setMessage(error.detail || "Failed to upload dataset.");
     } finally {
       setLoading(false);
     }
@@ -84,17 +92,8 @@ export default function DatasetUpload() {
         onSubmit={handleSubmit}
       >
         <Typography variant="h5" component="h2" gutterBottom>
-          Upload Dataset
+          Upload Dataset and Create Model
         </Typography>
-        <TextField
-          fullWidth
-          label="Dataset Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          margin="normal"
-          variant="outlined"
-        />
         <Input
           type="file"
           inputProps={{ accept: ".csv" }}
@@ -120,7 +119,7 @@ export default function DatasetUpload() {
             try {
               setUserHyperparameters(JSON.parse(e.target.value));
             } catch {
-              // ignore invalid JSON until submit
+              // Ignore invalid JSON until submit
             }
           }}
           multiline
@@ -136,7 +135,7 @@ export default function DatasetUpload() {
           fullWidth
           sx={{ mt: 2 }}
         >
-          {loading ? "Uploading..." : "Upload"}
+          {loading ? "Uploading..." : "Upload and Train"}
         </Button>
         {message && (
           <Alert severity={message.includes("successfully") ? "success" : "error"} sx={{ mt: 2 }}>
